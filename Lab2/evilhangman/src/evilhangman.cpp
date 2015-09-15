@@ -6,7 +6,6 @@
 #include <iterator>
 #include <unordered_set>
 #include <unordered_map>
-#include <bitset>
 using namespace std;
 
 const string alphabet  = "abcdefghijklmnopqrstuvwxyz";
@@ -14,17 +13,11 @@ const string DICT_PATH = "dictionary.txt";
 const char EMPTY = '_';
 
 /*
-* Function: loadDictionary
-* Usage: loadDictionary(fileName, dictionary(out))
-* ---------------------------------------
-* Loads the given unordered_set with words from a file.
-* Note: This method makes assumptions about the format of the file, behaviour for non-standard format is undefined.
+ * Loads the given map with words from a file, the length of the word becomes the key in the map.
 */
 void loadSortedDictionary(const string fileName, unordered_map<int, unordered_set<string>>& dictionary){
 
-
     ifstream dictStream{fileName};
-    //for_each(istream_iterator<string>{dictStream}, istream_iterator<string>{}, insertByLegth(*__first, dictionary));
 
     string word;
     while(dictStream){
@@ -40,30 +33,14 @@ void loadSortedDictionary(const string fileName, unordered_map<int, unordered_se
         dictionary[wordLength].insert(word);
     }
 
-
     dictStream.close();
 }
 
-void printDict(const unordered_map<int, unordered_set<string>>& dictionary){
-
-    for ( auto it = dictionary.begin(); it != dictionary.end(); ++it ){
-        cout << it->first << endl;
-        for (auto inner = it->second.begin(); inner != it->second.end(); ++inner){
-
-            cout << *inner << endl;
-        }
-        cout << endl;
-    }
-}
-
-
-void printDictSize(const unordered_set<string>& dictionary){
-
-    cout << "There are " << dictionary.size() << " words left." << endl;
-}
-
+/*
+ * Loads the given set with all words of the given length if it exists in the map.
+ * Returns true if words of the given length exists, returns false if none can be found.
+*/
 bool loadDictByLength(const int wordLength, unordered_map<int, unordered_set<string>> sortedDictionary, unordered_set<string>& dictionary){
-
 
     if(wordLength > 0){
         if(sortedDictionary.count(wordLength) > 0){
@@ -77,13 +54,21 @@ bool loadDictByLength(const int wordLength, unordered_map<int, unordered_set<str
     return false;
 }
 
-void partitionDictionary(const int wordLength, const char& partitionBy, const unordered_set<string>& dictionary, unordered_map<string, unordered_set<string>>& partitionedDict){
+void printDictSize(const unordered_set<string>& dictionary){
 
-    partitionedDict.clear();
+    cout << "There are " << dictionary.size() << " words left." << endl;
+}
+
+
+/*
+ * Divides the given set of words into families based on a given letter. It then loads a map with these families where the signature of the family is the key.
+*/
+void partitionDictionary(const int wordLength, const char& partitionBy, const unordered_set<string>& dictionary, unordered_map<string, unordered_set<string>>& destinationDict){
+
+    destinationDict.clear();
     string key;
     key.resize(wordLength);
     for(string word : dictionary){
-
         for(int i = 0; i < wordLength; i++){
 
             if(word[i] == partitionBy){
@@ -92,28 +77,26 @@ void partitionDictionary(const int wordLength, const char& partitionBy, const un
             }else{
                 key[i] = EMPTY;
             }
-
-
         }
 
-        if(partitionedDict.count(key) == 0){
+        if(destinationDict.count(key) == 0){
 
-            partitionedDict[key] = unordered_set<string>{};
+            destinationDict[key] = unordered_set<string>{};
         }
 
-
-        partitionedDict[key].insert(word);
+        destinationDict[key].insert(word);
     }
 }
 
+/*
+ * Selects the word family containing the highest word count.
+*/
 string selectWordFamily(unordered_map<string, unordered_set<string>>& partitionedDict, unordered_set<string>& dictionary){
 
     int largest = 0;
     string largestKey;
 
-
     for ( auto it = partitionedDict.begin(); it != partitionedDict.end(); ++it ){
-
         if(it->second.size() > largest){
             largest = it->second.size();
             largestKey = it->first;
@@ -124,6 +107,10 @@ string selectWordFamily(unordered_map<string, unordered_set<string>>& partitione
     return largestKey;
 }
 
+/*
+ * Updates the progress string with any new letters found.
+ * Returns number of new letters.
+*/
 int updateProgress(const string& newKey, string& progress){
 
     int lettersFound = 0;
@@ -144,54 +131,78 @@ int updateProgress(const string& newKey, string& progress){
 int main() {
     cout << "Welcome to Hangman." << endl;
 
-    int wordLength;
+    //Init dictionary
+
     unordered_map<int, unordered_set<string>> sortedDictionary;
     unordered_set<string> dictionary;
     loadSortedDictionary(DICT_PATH, sortedDictionary);
 
+    //Get desired length of word
     bool goodLength = false;
-
+    int wordLength;
     while (!goodLength) {
 
         cout << "Enter word length: ";
         cin >> wordLength;
-        goodLength = loadDictByLength(3, sortedDictionary, dictionary);
+        goodLength = loadDictByLength(wordLength, sortedDictionary, dictionary);
     }
 
+    int guessCount;
+    cout << "Enter the number of guesses you need: ";
+    cin >> guessCount;
 
-
-    unordered_set<string> guessedLetters;
-    printDictSize(dictionary);
-
+    unordered_set<char> guessedLetters; //For storing already guessed letters.
+    unordered_map<string, unordered_set<string>> partitionedDict; //Will be used to store word sets partitioned by family signature.
 
     char guess;
     string progress;
-    int missingLetters = wordLength;
     progress.assign(wordLength, '_');
+    int missingLetters = wordLength;
 
-    unordered_map<string, unordered_set<string>> partitionedDict;
 
     do{
         system("cls");
+
+        //User can enter '1' to debug the current state of the program, this will print all words in the current word set and the size of the set.
+        if(guess == '1'){
+            copy(begin(dictionary), end(dictionary), ostream_iterator<string>{cout, " "});
+            cout << "\n\n";
+            printDictSize(dictionary);
+        }
+
+        //Print previously guessed letters and ask the player to enter a new guess.
         cout << progress << endl;
-        printDictSize(dictionary);
-        cout << "Make a guess: ";
+        copy(begin(guessedLetters), end(guessedLetters), ostream_iterator<char>{cout, " "});
+        cout << "You have " << guessCount << " guesses left." << endl << "Make a guess: ";
         cin >> guess;
 
-        partitionDictionary(wordLength, guess, dictionary, partitionedDict);
-        string familyKey = selectWordFamily(partitionedDict, dictionary);
-        missingLetters -= updateProgress(familyKey, progress);
+        //If the guess is a letter and not already in the guessed letters set we consider it valid and updates the word set based on the guess.
+        if(isalpha(guess) && guessedLetters.count(guess) == 0){
 
+            guessedLetters.insert(guess);
+            partitionDictionary(wordLength, guess, dictionary, partitionedDict);
+            string familyKey = selectWordFamily(partitionedDict, dictionary);
 
+            int lettersFoundCount = updateProgress(familyKey, progress);
 
-    }while(missingLetters > 0);
+            if(lettersFoundCount > 0){
 
+                missingLetters -= lettersFoundCount;
+            }else{
 
-    cout << endl << progress  << endl << "You did it! The word was [" << progress << "] all along." << endl;
-    //copy(begin(dictionary), end(dictionary), ostream_iterator<string>{cout, " "});
+                guessCount--;
+            }
+        }
 
+    }while(missingLetters > 0 && guessCount > 0); //While there are still unkown letters and guesses left, we continue.
 
-    // TODO: Finish the program!
+    //If there are no missing letters we congratulate the player, otherwise we scold the player.
+    if(missingLetters > 0){
 
+        cout << "Wrong, sir, wrong! The word was clearly '" << *begin(dictionary) << "'. You get nothing, you loose!" << endl;
+    }else{
+
+        cout << endl << progress  << endl << "You did it! The word was " << progress << " all along." << endl;
+    }
     return 0;
 }
