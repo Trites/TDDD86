@@ -1,0 +1,138 @@
+#!/usr/bin/env python3
+#-*- coding: latin-1 -*-
+
+import smtplib, os
+from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
+from email.mime.text import MIMEText
+from email.utils import formatdate
+from email import encoders
+import getpass
+
+course = 'TDDD86'
+
+assistants =[ {'name' : 'Filip Stromback' , 'addr' : 'filip.stromback@liu.se'},
+ 	      {'name' : 'Victor Lagerkvist' , 'addr' : 'victor.lagerkvist@liu.se'},	
+  	      {'name' : 'Amir Aminifar' , 'addr' : 'amir.aminifar@liu.se'},
+   	      {'name' : 'Arian Maghazeh' , 'addr' : 'arian.maghazeh@liu.se'}]
+
+labs = [{'name': 'Lab 1 - Game of Life', 
+         'files': {'requried' : ['life','mycolony'], 
+                   'optional' : []},
+         'header' : 'Lab 1'} ,
+        {'name': 'Lab 2 - Ordkedja och Elak hänga gubbe' , 
+         'files': {'requried' : ['wordchain','evilhangman'],
+                   'optional' : []},
+         'header' : 'Lab 2'},
+	 {'name': 'Lab 3 - Tiles och TSP', 
+         'files': {'requried' : ['tilelist', 'tilelist', 'tour', 'tour'],
+                   'optional' : []},
+         'header' : 'Lab 3'},
+	 {'name': 'Lab 4', 
+         'files': {'requried' : ['labb4'],
+                   'optional' : []},
+         'header' : 'Lab 4'},
+	 {'name': 'Lab 5 - Boggle', 
+         'files': {'requried' : ['boggle', 'boggle', 'boggleplay'],
+                   'optional' : []},
+         'header' : 'Lab 5'},	 
+	 {'name': 'Lab 6 - Huffmankodning', 
+         'files': {'requried' : ['encoding'],
+                   'optional' : []},
+         'header' : 'Lab 6'},	 
+	 {'name': 'Lab 7 - Mönsterigenkänning', 
+         'files': {'requried' : ['fast', 'readme'],
+                   'optional' : []},
+         'header' : 'Lab 7'},	 
+	 {'name': 'Lab 8 - Trailblazer', 
+         'files': {'requried' : ['trailblazer'],
+                   'optional' : []},
+         'header' : 'Lab 8'},
+	 ]
+
+def send_mail(to, sender, assignment, files=[], server="smtp.liu.se"):
+    msg = MIMEMultipart()
+    msg['From'] = sender[0]+'@student.liu.se'
+    msg['To'] = '{name} <{addr}>'.format(**to)
+    msg['Date'] = formatdate(localtime=True)
+    msg['Subject'] = '[{} redovisning] {}'.format(course, assignment['header'])
+    msg.add_header('X-Course-Code',course)
+    msg.add_header('X-Lab-Name', assignment['header'])
+    message =  MIMEText('Från \n{}'.format('\n'.join(sender)), _charset='UTF-8')
+    msg.attach(message)
+    for f in files:
+        part = MIMEApplication(open(f,"rb").read())
+        part.add_header('Content-Disposition', 'attachment', filename=os.path.basename(f))
+        msg.attach(part)
+
+    smtp = smtplib.SMTP(server)
+    smtp.sendmail(sender[0]+'@student.liu.se', to['addr'], msg.as_string())
+    smtp.close()
+
+
+import os.path, sys,re
+
+valid_extensions = ['cpp','h','txt','tar.gz']
+
+if len(sys.argv) < 2:
+    print('Programmet ska anropas enligt',sys.argv[0], ' fil [fil, ...]')
+    sys.exit()
+
+
+for num,lab in enumerate(labs,1):
+    print('{:d}: {}'.format(num,lab['name']))
+
+
+lab=input('Vilken lab vill du redovisa? ')
+while not lab.isdigit() or int(lab) > len(labs):
+    lab=input('Felaktigt val, mata in ett heltal!: ')
+
+lab = labs[int(lab)-1]
+valid_files = lab['files']['requried'] + lab['files']['optional']
+
+for f in sys.argv[1:]:
+    if '.' not in f: sys.exit('Filen {} har ett felaktigt filnamn. Endast följande filer är godkända: {}'.format(f, ', '.join(valid_files)))
+    if len(os.path.basename(f).split('.')) == 2 :
+        name, ext = os.path.basename(f).split('.')
+    else: 
+        name, ext, eext = os.path.basename(f).split('.')
+        ext = ext+'.'+eext
+    
+    if not os.path.isfile(f) or getpass.getuser() not in os.path.abspath(f):
+        print('Filen "{}" finns inte eller tillhör inte dig!'.format(f))
+        sys.exit()
+    elif ext not in valid_extensions:
+        print('Filen "{}" har felaktig filändelse. Endast dessa är godkända: {}'.format(f, ', '.join(valid_extensions)))
+        sys.exit()
+    elif name.lower() not in valid_files:
+        print('Filen {} har ett felaktigt filnamn. Endast följande filer är godkända: {}'.format(f, ', '.join(valid_files)))
+        sys.exit()
+    
+    if name.lower() in lab['files']['requried']:
+        lab['files']['requried'].remove(name.lower())
+if len(lab['files']['requried']) >  0:
+    er = ''
+    if len(lab['files']['requried']) > 1:
+        er = 'er'
+    print('FEL! Föjande fil{} saknas: {}'.format(er, ', '.join(lab['files']['requried'])))
+    sys.exit()
+
+for num,ass in enumerate(assistants,1):
+    print('{:d}: {}'.format(num,ass['name']))
+
+
+ass=input('Vilken assistent? ')
+while not ass.isdigit() and int(ass) > len(assistants):
+    ass=input('Felaktigt val, mata in ett heltal!: ')
+
+ass = assistants[int(ass)-1]
+sender = [getpass.getuser(),]
+
+partner = input('Labpartner: ')
+if len(partner) > 0 :
+    while len(partner) != 0 and not re.match('^[a-z]{4,5}[0-9]{3}$',partner):
+        partner = input('Felaktig inmatning, försök igen: ')
+    sender.append(partner)
+send_mail(ass, sender, lab, sys.argv[1:])
+
+print('Redovisning skickad, glöm inte att lämna in ett laborationshäfte!')
