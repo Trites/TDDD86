@@ -5,7 +5,6 @@
 // TODO: remove this comment header and replace it with your own
 
 #include <sstream>
-#include <unordered_set>
 #include <stack>
 #include <utility>
 #include <string>
@@ -27,8 +26,17 @@ static string CUBES[NUM_CUBES] = {        // the letters on all 6 sides of every
 
     Boggle::Boggle(){
 
-        board = { BOARD_WIDTH, BOARD_HEIGHT };
+        board = { BOARD_HEIGHT, BOARD_WIDTH };
         lexicon = { DICTIONARY_FILE };
+
+    }
+
+    void Boggle::reset(){
+
+        playerScore = 0;
+        totalScore = 0;
+        validGuesses.clear();
+        validWords.clear();
     }
 
     /*
@@ -36,14 +44,17 @@ static string CUBES[NUM_CUBES] = {        // the letters on all 6 sides of every
      */
     void Boggle::buildTable(){
 
-        int i = 0;
+
+        /*int i = 0;
         for(auto& cell : board){
 
             cell = CUBES[i][rand() % (CUBE_SIDES - 1)];
             i++;
-        }
+        }*/
 
-        shuffle(board);
+        string debugLoad = "FYCLIOMGORILHJHU";
+        copy(begin(debugLoad), end(debugLoad), begin(board));
+        //shuffle(board);
     }
 
     /*
@@ -54,7 +65,16 @@ static string CUBES[NUM_CUBES] = {        // the letters on all 6 sides of every
 
         validWords.clear();
         unordered_set<int> visited;
-        explore("", 1, 1, visited);
+
+        for(int y = 0; y < BOARD_HEIGHT; y++){
+            for(int x = 0; x < BOARD_WIDTH; x++){
+
+                explore("", x, y, visited);
+            }
+        }
+
+
+        cout << "Total score: " << totalScore << endl;
     }
 
     /*
@@ -65,7 +85,7 @@ static string CUBES[NUM_CUBES] = {        // the letters on all 6 sides of every
         for(int y = 0; y < BOARD_HEIGHT; y++){
             for(int x = 0; x < BOARD_WIDTH; x++){
 
-                cout << board.get(x, y);
+                cout << board.get(y, x);
             }
             cout << "\n";
         }
@@ -77,7 +97,7 @@ static string CUBES[NUM_CUBES] = {        // the letters on all 6 sides of every
      */
     int Boggle::getPlayerScore() const{
 
-        return validGuesses.size();
+        return playerScore;
     }
 
     /*
@@ -85,15 +105,14 @@ static string CUBES[NUM_CUBES] = {        // the letters on all 6 sides of every
      */
     int Boggle::getCPUScore() const{
 
-        return validWords.size() - validGuesses.size();
+        return totalScore - playerScore;
     }
 
-    unordered_set<string> Boggle::getCPUWords() const{
+    vector<string> Boggle::getCPUWords() const{
 
-        unordered_set<string> result {validWords};
+        vector<string> result;
 
-        if(validGuesses.size() > 0)
-            result.erase(begin(validGuesses));
+        set_difference(begin(validWords), end(validWords), begin(validGuesses), end(validGuesses), inserter(result, begin(result)));
 
         return result;
     }
@@ -101,7 +120,7 @@ static string CUBES[NUM_CUBES] = {        // the letters on all 6 sides of every
     /*
      * Returns all valid guesses the player has made on the currrent board so far.
      */
-    unordered_set<string> Boggle::getPlayerWords() const{
+    set<string> Boggle::getPlayerWords() const{
 
         return validGuesses;
     }
@@ -113,6 +132,15 @@ static string CUBES[NUM_CUBES] = {        // the letters on all 6 sides of every
      */
     bool Boggle::makeGuess(const string& guess, string& error){
 
+        if(guess == "1"){
+
+            for(auto& word : validWords)
+                cout << word << endl;
+            cout << endl;
+            error = "DEBUG.";
+            return false;
+        }
+
         if(guess.length() < MIN_WORD_LENGTH){
 
             ostringstream oss;
@@ -123,7 +151,12 @@ static string CUBES[NUM_CUBES] = {        // the letters on all 6 sides of every
 
         if(validWords.count(guess) == 0){
 
-            error = "That word does not exist.";
+            if(lexicon.contains(guess)){
+                error = "Word exists, but not on game board.";
+            }else{
+                error = "That word does not exist.";
+            }
+
             return false;
         }
 
@@ -133,6 +166,7 @@ static string CUBES[NUM_CUBES] = {        // the letters on all 6 sides of every
             return false;
         }
 
+        playerScore += scoreFor(guess);
         validGuesses.insert(guess);
         return true;
     }
@@ -140,17 +174,20 @@ static string CUBES[NUM_CUBES] = {        // the letters on all 6 sides of every
     /*
      * Recursivly explores the game board and add any solutions to validWords collection.
      */
-    void Boggle::explore(string word, int x, int y, unordered_set<int>& visited){
+    void Boggle::explore(string word, int x, int y, unordered_set<int> visited){
 
         //Add letter contained in this cell to word.
-        word.push_back(board.get(x, y));
+        word.push_back(board.get(y, x));
 
         //If our word is a valid prefix it is worth to continue, otherwise we return.
         if(lexicon.containsPrefix(word)){
 
             //If word is acceptable we add it to validWords collection.
-            if(word.length() >= MIN_WORD_LENGTH && lexicon.contains(word))
+            if(word.length() >= MIN_WORD_LENGTH && lexicon.contains(word) && validWords.count(word) == 0){
+
+                totalScore += scoreFor(word);
                 validWords.insert(word);
+            }
 
             //Convert coordinates to index in order to more easily store them as visited.
             int currentIndex = x + y * BOARD_WIDTH;
@@ -159,7 +196,7 @@ static string CUBES[NUM_CUBES] = {        // the letters on all 6 sides of every
             //Check all possible neighbours, exploring those who are withing bounds.
             for(int ny = y - 1; ny <= y + 1; ny++){
                 for(int nx = x - 1; nx <= x + 1; nx++){
-                    if(board.inBounds(nx, ny)){
+                    if(board.inBounds(ny, nx)){
                         if(visited.count(nx + ny * BOARD_WIDTH) == 0){
 
                                 explore(word, nx, ny, visited);
@@ -169,8 +206,13 @@ static string CUBES[NUM_CUBES] = {        // the letters on all 6 sides of every
             }
 
             //Erase cell from visited collection as we are backtracking.
-            visited.erase(currentIndex);
+            //visited.erase(currentIndex);
         }
 
         return;
+    }
+
+    int Boggle::scoreFor(const string &word) const
+    {
+        return word.length() - (MIN_WORD_LENGTH - 1);
     }

@@ -17,6 +17,7 @@
 void playOneGame(Boggle& boggle) {
     // TODO: implement this function (and add any other functions you like to help you)
 
+    boggle.reset();
     boggle.buildTable();
     boggle.findAllWords();
 
@@ -26,9 +27,18 @@ void playOneGame(Boggle& boggle) {
     string error;
     do{
 
+
+        cout << "Your score: " << boggle.getPlayerScore() << endl;
+        cout << endl << "Your words (" << boggle.getPlayerWords().size() << "): " << endl;
+
+        for(auto& word : boggle.getPlayerWords())
+            cout << word << endl;
+
+        cout << "\n";
+
         boggle.draw();
 
-        cout << "Make a guess: ";
+        cout << endl << "Make a guess: ";
 
         getline(cin, input);
 
@@ -49,18 +59,19 @@ void playOneGame(Boggle& boggle) {
             cout << error << endl;
         }
 
-        cout << "Your score: " << boggle.getPlayerScore() << endl;
-
     }while (true);
 
-    cout << "My words: " << endl;
+    vector<string> result = boggle.getCPUWords();
 
-    unordered_set<string> result = boggle.getCPUWords();
+    cout << "My words(" << result.size() << "):" << endl;
+
+
 
     for(auto& word : result)
         cout << word << endl;
 
     cout << "My score: " << boggle.getCPUScore() << endl;
+    cout << "Your score: " << boggle.getPlayerScore() << endl;
 
     if(boggle.getCPUScore() > boggle.getPlayerScore()){
 
