@@ -12,6 +12,14 @@ using namespace std;
 
 GameState::GameState(){}
 
+GameState::~GameState(){
+
+    for (Robot* robot : robots){
+
+        delete robot;
+    }
+}
+
 GameState::GameState(int numberOfRobots) {
 
     for (int i = 0; i < numberOfRobots; i++) {

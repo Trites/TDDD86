@@ -10,6 +10,8 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <ctype.h>
+#include <stdio.h>
 #include "Boggle.h"
 #include "random.h"
 #include "shuffle.h"
@@ -45,16 +47,31 @@ static string CUBES[NUM_CUBES] = {        // the letters on all 6 sides of every
     void Boggle::buildTable(){
 
 
-        /*int i = 0;
+        int i = 0;
         for(auto& cell : board){
 
             cell = CUBES[i][rand() % (CUBE_SIDES - 1)];
             i++;
-        }*/
+        }
 
-        string debugLoad = "FYCLIOMGORILHJHU";
-        copy(begin(debugLoad), end(debugLoad), begin(board));
-        //shuffle(board);
+        shuffle(board);
+    }
+
+    bool Boggle::buildTable(string& debugBoard){
+
+        if(debugBoard.size() != BOARD_SIZE)
+            return false;
+
+        for(int i = 0; i < BOARD_SIZE; i++){
+
+            if(!isalpha(debugBoard[i]))
+                return false;
+
+            debugBoard[i] = toupper(debugBoard[i]);
+
+            board[i/BOARD_WIDTH][i % BOARD_WIDTH] = debugBoard[i];
+        }
+        return true;
     }
 
     /*
@@ -166,6 +183,10 @@ static string CUBES[NUM_CUBES] = {        // the letters on all 6 sides of every
         return true;
     }
 
+    /*
+     * Explores all cells until given word is found.
+     * Returns false if word is not found.
+     */
     bool Boggle::findWord(const string& word) const
     {
         unordered_set<int> visited;
@@ -180,6 +201,10 @@ static string CUBES[NUM_CUBES] = {        // the letters on all 6 sides of every
         return false;
     }
 
+    /*
+     * Explores the board from coordinates x,y.
+     * Returns true if given word is found.
+     */
     bool Boggle::exploreFor(const string& word, int x, int y, unordered_set<int>& visited, size_t charIndex) const
     {
         if(charIndex == word.length())

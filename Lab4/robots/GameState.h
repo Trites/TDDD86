@@ -20,6 +20,8 @@
 class GameState {
 public:
     GameState();
+    GameState(const GameState& other);
+    ~GameState();
     GameState(int numberOfRobots);
 
     /*

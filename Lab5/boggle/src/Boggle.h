@@ -31,6 +31,7 @@ public:
     ~Boggle() = default;
     void reset();
     void buildTable();
+    bool buildTable(string& debugBoard);
     void findAllWords();
     void draw() const;
     bool makeGuess(const string& guess, string& error);

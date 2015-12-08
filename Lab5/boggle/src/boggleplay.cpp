@@ -77,7 +77,28 @@ void cpuTurn(Boggle& boggle){
 void playOneGame(Boggle& boggle) {
 
     boggle.reset();
-    boggle.buildTable();
+
+    bool validBoard = false;
+    while(!validBoard){
+
+        cout << "Build custom board? Leave empty for random board." << endl;
+        cout << "Board: ";
+
+        string customBoard;
+        getline(cin, customBoard);
+
+        if(customBoard == ""){
+
+            cout << "Random board!" << endl;
+            boggle.buildTable();
+            validBoard = true;
+        }
+        else{
+
+            validBoard = boggle.buildTable(customBoard);
+        }
+    }
+
 
     cout << "Your turn!" << "\n\n";
 
