@@ -34,11 +34,14 @@ HuffmanNode* buildEncodingTree(const map<int, int> &freqTable) {
         prioQueue.push(new HuffmanNode(it->first, it->second));
     }
 
-    HuffmanNode *root;
+    HuffmanNode *root = new HuffmanNode();
+
     while(!prioQueue.empty()){
 
+        HuffmanNode *node = prioQueue.top();
+        prioQueue.pop();
 
-        //TODO: HERE!
+        if(root->)
     }
     return nullptr;
 }

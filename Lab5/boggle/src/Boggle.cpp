@@ -34,9 +34,9 @@ static string CUBES[NUM_CUBES] = {        // the letters on all 6 sides of every
     void Boggle::reset(){
 
         playerScore = 0;
-        totalScore = 0;
-        validGuesses.clear();
-        validWords.clear();
+        cpuScore = 0;
+        playerWords.clear();
+        cpuWords.clear();
     }
 
     /*
@@ -63,7 +63,7 @@ static string CUBES[NUM_CUBES] = {        // the letters on all 6 sides of every
      */
     void Boggle::findAllWords(){
 
-        validWords.clear();
+        cpuWords.clear();
         unordered_set<int> visited;
 
         for(int y = 0; y < BOARD_HEIGHT; y++){
@@ -72,9 +72,6 @@ static string CUBES[NUM_CUBES] = {        // the letters on all 6 sides of every
                 explore("", x, y, visited);
             }
         }
-
-
-        cout << "Total score: " << totalScore << endl;
     }
 
     /*
@@ -105,16 +102,12 @@ static string CUBES[NUM_CUBES] = {        // the letters on all 6 sides of every
      */
     int Boggle::getCPUScore() const{
 
-        return totalScore - playerScore;
+        return cpuScore;
     }
 
-    vector<string> Boggle::getCPUWords() const{
+    set<string> Boggle::getCPUWords() const{
 
-        vector<string> result;
-
-        set_difference(begin(validWords), end(validWords), begin(validGuesses), end(validGuesses), inserter(result, begin(result)));
-
-        return result;
+        return cpuWords;
     }
 
     /*
@@ -122,7 +115,7 @@ static string CUBES[NUM_CUBES] = {        // the letters on all 6 sides of every
      */
     set<string> Boggle::getPlayerWords() const{
 
-        return validGuesses;
+        return playerWords;
     }
 
     /*
@@ -134,7 +127,7 @@ static string CUBES[NUM_CUBES] = {        // the letters on all 6 sides of every
 
         if(guess == "1"){
 
-            for(auto& word : validWords)
+            for(auto& word : cpuWords)
                 cout << word << endl;
             cout << endl;
             error = "DEBUG.";
@@ -149,32 +142,80 @@ static string CUBES[NUM_CUBES] = {        // the letters on all 6 sides of every
             return false;
         }
 
-        if(validWords.count(guess) == 0){
-
-            if(lexicon.contains(guess)){
-                error = "Word exists, but not on game board.";
-            }else{
-                error = "That word does not exist.";
-            }
-
-            return false;
-        }
-
-        if(validGuesses.count(guess) != 0){
+        if(playerWords.count(guess) != 0){
 
             error = "You've already guessed that word!";
             return false;
         }
 
+        if(!lexicon.contains(guess)){
+
+            error = "That word does not exist.";
+            return false;
+        }
+
+
+        if(!findWord(guess)){
+
+            error = "Word exists, but not on game board.";
+            return false;
+        }
+
         playerScore += scoreFor(guess);
-        validGuesses.insert(guess);
+        playerWords.insert(guess);
         return true;
+    }
+
+    bool Boggle::findWord(const string& word) const
+    {
+        unordered_set<int> visited;
+        for(int y = 0; y < BOARD_HEIGHT; y++){
+            for(int x = 0; x < BOARD_WIDTH; x++){
+
+                if(exploreFor(word, x, y, visited))
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    bool Boggle::exploreFor(const string& word, int x, int y, unordered_set<int>& visited, size_t charIndex) const
+    {
+        if(charIndex == word.length())
+            return true;
+
+        if(board.get(y, x) == word[charIndex]){
+
+
+            //Convert coordinates to index in order to more easily store them as visited.
+            int currentIndex = x + y * BOARD_WIDTH;
+            visited.insert(currentIndex);
+
+            //Check all possible neighbours, exploring those who are withing bounds.
+            for(int ny = y - 1; ny <= y + 1; ny++){
+                for(int nx = x - 1; nx <= x + 1; nx++){
+                    if(board.inBounds(ny, nx)){
+                        if(visited.count(nx + ny * BOARD_WIDTH) == 0){
+
+                            if(exploreFor(word, nx, ny, visited, charIndex + 1))
+                                return true;
+                        }
+                    }
+                }
+            }
+
+            //Erase cell from visited collection as we are backtracking.
+            visited.erase(currentIndex);
+        }
+
+        return false;
     }
 
     /*
      * Recursivly explores the game board and add any solutions to validWords collection.
      */
-    void Boggle::explore(string word, int x, int y, unordered_set<int> visited){
+    void Boggle::explore(string word, int x, int y, unordered_set<int>& visited){
 
         //Add letter contained in this cell to word.
         word.push_back(board.get(y, x));
@@ -183,10 +224,10 @@ static string CUBES[NUM_CUBES] = {        // the letters on all 6 sides of every
         if(lexicon.containsPrefix(word)){
 
             //If word is acceptable we add it to validWords collection.
-            if(word.length() >= MIN_WORD_LENGTH && lexicon.contains(word) && validWords.count(word) == 0){
+            if(word.length() >= MIN_WORD_LENGTH && !alreadyFound(word) && lexicon.contains(word)){
 
-                totalScore += scoreFor(word);
-                validWords.insert(word);
+                cpuScore += scoreFor(word);
+                cpuWords.insert(word);
             }
 
             //Convert coordinates to index in order to more easily store them as visited.
@@ -206,7 +247,7 @@ static string CUBES[NUM_CUBES] = {        // the letters on all 6 sides of every
             }
 
             //Erase cell from visited collection as we are backtracking.
-            //visited.erase(currentIndex);
+            visited.erase(currentIndex);
         }
 
         return;
@@ -215,4 +256,9 @@ static string CUBES[NUM_CUBES] = {        // the letters on all 6 sides of every
     int Boggle::scoreFor(const string &word) const
     {
         return word.length() - (MIN_WORD_LENGTH - 1);
+    }
+
+    bool Boggle::alreadyFound(const string &word) const
+    {
+        return cpuWords.count(word) != 0 || playerWords.count(word) != 0;
     }

@@ -11,64 +11,86 @@
 #include "strlib.h"
 // TODO: include any other header files you need
 
+
 /*
- * Plays one game of Boggle using the given boggle game state object.
+ * Prints current player score, guessed words and board.
  */
-void playOneGame(Boggle& boggle) {
-    // TODO: implement this function (and add any other functions you like to help you)
+void printPlayerView(Boggle& boggle){
 
-    boggle.reset();
-    boggle.buildTable();
-    boggle.findAllWords();
+    cout << "Your score: " << boggle.getPlayerScore() << endl;
+    cout << endl << "Your words (" << boggle.getPlayerWords().size() << "): " << endl;
 
-    cout << "Your turn!" << "\n\n";
+    for(auto& word : boggle.getPlayerWords())
+        cout << word << endl;
+
+    boggle.draw();
+}
+
+
+/*
+ * Takes a guess from the player and looks for it on the board.
+ * Returns false if player enters empty string.
+ */
+bool playerTurn(Boggle& boggle){
 
     string input;
     string error;
-    do{
 
+    cout << endl << "Make a guess: ";
 
-        cout << "Your score: " << boggle.getPlayerScore() << endl;
-        cout << endl << "Your words (" << boggle.getPlayerWords().size() << "): " << endl;
+    getline(cin, input);;
 
-        for(auto& word : boggle.getPlayerWords())
-            cout << word << endl;
+    if(input == "")
+        return false;
 
-        cout << "\n";
+    if(boggle.makeGuess(input, error)){
 
-        boggle.draw();
+        cout << "You found new word: " << input << endl;
 
-        cout << endl << "Make a guess: ";
+    }else{
 
-        getline(cin, input);
+        cout << error << endl;
+    }
 
-        cout << "\n\n";
+    return true;
+}
 
+/*
+ * Finds and prints all words not yet found by player.
+ */
+void cpuTurn(Boggle& boggle){
 
-
-        if(input == "")
-            break;
-
-
-        if(boggle.makeGuess(input, error)){
-
-            cout << "You found new word: " << input << endl;
-
-        }else{
-
-            cout << error << endl;
-        }
-
-    }while (true);
-
-    vector<string> result = boggle.getCPUWords();
+    boggle.findAllWords();
+    set<string> result = boggle.getCPUWords();
 
     cout << "My words(" << result.size() << "):" << endl;
 
 
-
     for(auto& word : result)
         cout << word << endl;
+}
+
+
+/*
+ * Plays one game of Boggle using the given boggle game state object.
+ */
+void playOneGame(Boggle& boggle) {
+
+    boggle.reset();
+    boggle.buildTable();
+
+    cout << "Your turn!" << "\n\n";
+
+
+
+    do{
+
+        printPlayerView(boggle);
+    }while (playerTurn(boggle));
+
+
+    cpuTurn(boggle);
+
 
     cout << "My score: " << boggle.getCPUScore() << endl;
     cout << "Your score: " << boggle.getPlayerScore() << endl;

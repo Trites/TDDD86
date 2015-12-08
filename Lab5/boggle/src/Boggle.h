@@ -37,18 +37,22 @@ public:
     int getPlayerScore() const;
     int getCPUScore() const;
     set<string> getPlayerWords() const;
-    vector<string> getCPUWords() const;
+    set<string> getCPUWords() const;
 
 private:
-    int playerScore;
-    int totalScore;
     Grid<char> board;
     Lexicon lexicon;
-    set<string> validWords;
-    set<string> validGuesses;
 
-    void explore(string word, int x, int y, unordered_set<int> visited);
+    int cpuScore;
+    int playerScore;
+    set<string> cpuWords;
+    set<string> playerWords;
+
+    bool findWord(const string& word) const;
+    bool exploreFor(const string& word, int x, int y, unordered_set<int>& visited, size_t charIndex = 0) const;
+    void explore(string word, int x, int y, unordered_set<int>& visited);
     int scoreFor(const string& word) const;
+    bool alreadyFound(const string& word) const;
 
 };
 
