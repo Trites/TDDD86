@@ -12,13 +12,18 @@ using namespace std;
 
 GameState::GameState(){}
 
-GameState::GameState(const GameState &other)//:
-//hero(other.hero), robots(other.robots.size()), robotsAlive(other.robotsAlive)
+GameState::GameState(const GameState &other)
 {
 
     cout << "Copy begin..." << endl;
+
+    hero = Hero(other.hero);
+    robots.resize(other.robots.size());
+
     for(size_t i = 0; i < other.robots.size(); i++)
-        robots[i] = new Robot(*other.robots[i]);
+        robots[i] = other.robots[i]->clone(); //clone
+
+    robotsAlive = other.robotsAlive;
 
     cout << "Copy end" << endl;
 }
@@ -30,11 +35,14 @@ GameState::~GameState(){
 
         delete robot;
     }
-
+    robots.clear();
     cout << "Destroy end." << endl;
 }
 
 GameState::GameState(int numberOfRobots) {
+
+    cout << "R-Order: " << numberOfRobots << endl; 
+    cout << "R-Acc-Pre: " << robots.size() << endl;
 
     for (int i = 0; i < numberOfRobots; i++) {
 
@@ -46,6 +54,8 @@ GameState::GameState(int numberOfRobots) {
         robots.push_back(robot);
     }
 
+
+    cout << "R-Acc: " << robots.size() << endl;
     robotsAlive = numberOfRobots;
     teleportHero();
 }
@@ -72,23 +82,25 @@ void GameState::moveRobots() {
 
 int GameState::countCollisions() {
     int numberDestroyed = 0;
-    unsigned int i = 0;
 
-    while (i < robots.size()) {
+    for(size_t i = 0; i < robots.size(); i++){
+
         if(!robots[i]->isJunk()){
-            bool collision = (countRobotsAt(*robots[i]) > 1);
+            bool collision = countRobotsAt(*robots[i]) > 1;
 
-            if (collision) {
-                Robot* robot = robots[i];
-                robots[i] = new Junk(*robot);
-                delete robot;
+            if(collision){
+
+                Junk* junk = new Junk(*robots[i]);
+                delete robots[i];
+                robots[i] = junk;
 
                 numberDestroyed++;
             }
         }
-        i++;
     }
+
     robotsAlive -= numberDestroyed;
+
     return numberDestroyed;
 }
 
@@ -150,13 +162,21 @@ GameState& GameState::operator =(const GameState& rhs){
     cout << "Assign begin..." << endl;
     hero = rhs.hero;
 
-    robots.reserve(robots.size());
+    cout << "Size of copy: " << rhs.robots.size() << endl;
+    cout << "My size pre: " << rhs.robots.size() << endl;
+    robots.resize(rhs.robots.size());
 
-    for(size_t i = 0; i < robots.size(); i++)
-        robots[i] = new Robot(*rhs.robots[i]);
+    for(size_t i = 0; i < rhs.robots.size(); i++){
+
+        delete robots[i];
+        robots[i] = rhs.robots[i]->clone();
+    }
 
     robotsAlive = rhs.robotsAlive;
 
+
+    cout << "My size: " << robots.size() << endl;
+    cout << "Alive: " << robotsAlive << endl;
 
     cout << "Assign end..." << endl;
     return *this;

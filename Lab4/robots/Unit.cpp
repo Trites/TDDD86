@@ -26,6 +26,11 @@ Unit::Unit(const Point& p) {
     y = p.y;
 }
 
+Unit* Unit::clone() const{
+
+    return new Unit(*this);
+}
+
 Point Unit::asPoint() const {
     return Point{x, y};
 }

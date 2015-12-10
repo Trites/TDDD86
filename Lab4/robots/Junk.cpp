@@ -9,6 +9,11 @@
 Junk::Junk() : Robot() {}
 Junk::Junk(Robot c) : Robot(c) {}
 
+Junk* Junk::clone() const{
+
+    return new Junk(*this);
+}
+
 bool Junk::attacks(const Unit &u) const { return false; }
 
 void Junk::moveTowards(const Unit& u){}

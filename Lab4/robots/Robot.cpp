@@ -8,6 +8,11 @@
 
 Robot::Robot() : Unit() {}
 
+Robot* Robot::clone() const{
+
+    return new Robot(*this);
+}
+
 bool Robot::isJunk() const{
 
     return false;
