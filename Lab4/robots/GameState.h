@@ -70,6 +70,8 @@ public:
      */
     Hero getHero () const;
 
+    GameState& operator=(const GameState& rhs);
+
 private:
     int robotsAlive;
     std::vector<Robot*> robots;  // the robots

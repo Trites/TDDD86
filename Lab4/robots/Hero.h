@@ -12,6 +12,7 @@
 class Hero : public Unit {
 public:
     Hero();
+    Hero(const Hero& other);
 
     /*
     * Draws this hero onto the given QGraphicsScene.

@@ -12,12 +12,26 @@ using namespace std;
 
 GameState::GameState(){}
 
+GameState::GameState(const GameState &other)//:
+//hero(other.hero), robots(other.robots.size()), robotsAlive(other.robotsAlive)
+{
+
+    cout << "Copy begin..." << endl;
+    for(size_t i = 0; i < other.robots.size(); i++)
+        robots[i] = new Robot(*other.robots[i]);
+
+    cout << "Copy end" << endl;
+}
+
 GameState::~GameState(){
 
+    cout << "Destroy begin..." << endl;
     for (Robot* robot : robots){
 
         delete robot;
     }
+
+    cout << "Destroy end." << endl;
 }
 
 GameState::GameState(int numberOfRobots) {
@@ -128,4 +142,22 @@ int GameState::countRobotsAt(const Unit& unit) const {
             count++;
     }
     return count;
+}
+
+GameState& GameState::operator =(const GameState& rhs){
+
+
+    cout << "Assign begin..." << endl;
+    hero = rhs.hero;
+
+    robots.reserve(robots.size());
+
+    for(size_t i = 0; i < robots.size(); i++)
+        robots[i] = new Robot(*rhs.robots[i]);
+
+    robotsAlive = rhs.robotsAlive;
+
+
+    cout << "Assign end..." << endl;
+    return *this;
 }

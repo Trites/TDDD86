@@ -5,6 +5,7 @@
  */
 
 #include <algorithm>
+#include <iostream>
 #include "mainwindow.h"
 #include "Hero.h"
 #include "Robot.h"
@@ -156,15 +157,22 @@ void MainWindow::processMove(bool waiting) {
     displayScore();
 
     if (!gameState.anyRobotsLeft()) { // won level
+
+        std::cout << "Begin win..." << std::endl;
         numberOfRobots = std::min(MAX_ROBOTS, numberOfRobots + ROBOTS_INC);
+        std::cout << "Copy." << std::endl;
         gameState = GameState(numberOfRobots);
+        std::cout << "Draw." << std::endl;
         gameState.draw(scene);
         ++level;
         displayLevel();
+        std::cout << "End win." << std::endl;
     } else if (gameState.heroDead()) { // game over
         gameOver = true;
         gameOverWindow.show();
     }
+
+
 }
 
 /*
