@@ -10,12 +10,22 @@
 #include <QGraphicsScene>
 
 class Robot : public Unit {
+
+const static int MOVE_DIST_SQUARED = 2;
+
 public:
     Robot();
     virtual ~Robot() = default;
     virtual Robot* clone() const;
     virtual bool isJunk() const;
+
+    /*
+    * Can I catch u in one move?
+    */
+    virtual bool attacks(const Unit& u) const;
+
     void draw(QGraphicsScene* scene) const;
+
 };
 
 #endif // ROBOT_H

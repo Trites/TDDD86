@@ -17,7 +17,7 @@ public:
     Unit();
     Unit(const Unit& u);
     Unit(const Point& p);
-    virtual Unit* clone() const;
+    virtual Unit* clone() const = 0;
 
     /*
     * Return Point representation of Unit
@@ -30,14 +30,14 @@ public:
     bool at(const Unit& u) const;
 
     /*
-    * Can I catch u in one move?
-    */
-    virtual bool attacks(const Unit& u) const;
-
-    /*
     * Take one step closer to u
     */
     virtual void moveTowards(const Unit& u);
+
+    /*
+    * Take one step closer to p
+    */
+    virtual void moveTowards(const Point& p);
 
     /*
     * Teleport. Does not check for collision
@@ -47,15 +47,15 @@ public:
     /*
     * Euclidean distance to u
     */
-    double distanceTo(const Unit& u) const;
+    double distanceToSquared(const Unit& u) const;
 
     /*
      * Draws Unit
      */
-    virtual void draw(QGraphicsScene* scene) const;
+    virtual void draw(QGraphicsScene* scene) const = 0;
 private:
-    int x;  // x position of this unit
-    int y;  // y position of this unit
+    int x;
+    int y;
 
     // private helpers
     void checkBounds();

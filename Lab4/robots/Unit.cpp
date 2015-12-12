@@ -16,40 +16,29 @@ Unit::Unit() {
     teleport();
 }
 
-Unit::Unit(const Unit& u) {
-    x = u.x;
-    y = u.y;
-}
+Unit::Unit(const Unit& u):
+    x(u.x), y(u.y){}
 
-Unit::Unit(const Point& p) {
-    x = p.x;
-    y = p.y;
-}
-
-Unit* Unit::clone() const{
-
-    return new Unit(*this);
-}
+Unit::Unit(const Point& p):
+    x(p.x), y(p.y){}
 
 Point Unit::asPoint() const {
     return Point{x, y};
 }
 
 bool Unit::at(const Unit& u) const {
-    return (x == u.x && y == u.y);
-}
-
-bool Unit::attacks(const Unit& u) const {
-
-    return (abs(x - u.x) <= 1 &&
-            abs(y - u.y) <= 1);
+    return x == u.x && y == u.y;
 }
 
 void Unit::moveTowards(const Unit& u) {
-    if (x > u.x) x--;
-    if (x < u.x) x++;
-    if (y > u.y) y--;
-    if (y < u.y) y++;
+    moveTowards(u.asPoint());
+}
+
+void Unit::moveTowards(const Point& p) {
+    if (x > p.x) x--;
+    if (x < p.x) x++;
+    if (y > p.y) y--;
+    if (y < p.y) y++;
     checkBounds();
 }
 
@@ -58,13 +47,11 @@ void Unit::teleport() {
     y = rand_int (MIN_Y, MAX_Y);
 }
 
-double Unit::distanceTo(const Unit& u) const {
+double Unit::distanceToSquared(const Unit& u) const {
     double dx = u.x - x;
     double dy = u.y - y;
-    return sqrt(dx * dx + dy * dy);
+    return dx * dx + dy * dy;
 }
-
-void Unit::draw(QGraphicsScene *scene) const {}
 
 /*
  * Put this unit inside playing field if outside
