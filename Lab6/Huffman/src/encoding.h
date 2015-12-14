@@ -33,7 +33,7 @@ void decodeData(ibitstream& input, HuffmanNode* encodingTree, ostream& output);
 void compress(istream& input, obitstream& output);
 void decompress(ibitstream& input, ostream& output);
 void freeTree(HuffmanNode* node);
-void saveFreqTable(const map<int, int>& freqTable);
-map<int, int> loadFreqTable();
+void saveFreqTable(const map<int, int>& freqTable, ostream& output);
+map<int, int> loadFreqTable(istream& input);
 
 #endif

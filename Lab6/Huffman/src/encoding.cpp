@@ -133,6 +133,7 @@ void decodeData(ibitstream& input, HuffmanNode* encodingTree, ostream& output) {
     while(true){
 
         c = decodeChar(input, encodingTree);
+        //cout << "Decoded: " << static_cast<char>(c) << endl;
 
         //Return when EOF is found
         if(c == PSEUDO_EOF)
@@ -147,7 +148,8 @@ void compress(istream& input, obitstream& output) {
 
     //Build and save frequencyTable
     map<int, int> frequencyTable = buildFrequencyTable(input);
-    saveFreqTable(frequencyTable);
+    saveFreqTable(frequencyTable, output);
+
 
     //Build tree and map
     HuffmanNode *encodingTree = buildEncodingTree(frequencyTable);
@@ -165,7 +167,7 @@ void compress(istream& input, obitstream& output) {
 void decompress(ibitstream& input, ostream& output) {
 
     //Load frequencyTable from file
-    map<int, int> freqTable = loadFreqTable();
+    map<int, int> freqTable = loadFreqTable(input);
 
     //Build tree and map
     HuffmanNode *encodingTree = buildEncodingTree(freqTable);
@@ -187,39 +189,31 @@ void freeTree(HuffmanNode* node) {
     delete node;
 }
 
-void saveFreqTable(const map<int, int> &freqTable)
+void saveFreqTable(const map<int, int> &freqTable, ostream& output)
 {
-    ofstream file;
-    file.open("freqTable.txt", ios::trunc);
+    for (auto it=begin(freqTable); it!=end(freqTable); ++it){
 
-    for (auto it=begin(freqTable); it!=end(freqTable); ++it)
-        file << it->first << ' ' << it->second << '\n';
-
-    file.close();
-
-}
-
-map<int, int> loadFreqTable()
-{
-
-    map<int, int> freqTable;
-
-    ifstream file("freqTable.txt");
-    string line;
-
-    while(getline(file, line)){
-
-        istringstream iss(line);
-
-        int key;
-        int value;
-
-        iss >> key;
-        iss >> value;
-
-        freqTable[key] = value;
-
+        cout << "Save: " << it->first << ":" << it->second << endl;
+        output << it->first << ' ' << it->second << ' ';
     }
 
+    output << '*';
+}
+
+map<int, int> loadFreqTable(istream& input)
+{
+    map<int, int> freqTable;
+
+    int key;
+    int value;
+
+    string line;
+    getline(input, line, '*');
+    istringstream iss(line);
+
+    while(iss >> key && iss >> value){
+
+        freqTable[key] = value;
+    }
     return freqTable;
 }
