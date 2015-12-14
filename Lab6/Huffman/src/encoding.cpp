@@ -20,11 +20,11 @@ map<int, int> buildFrequencyTable(istream& input) {
     //Read input and populate frequency table
     while(it != eos){
 
-        cout << "Found: " << *it << endl;
         freqTable[*it] += 1;
         ++it;
     }
 
+    //Put EOF
     freqTable[PSEUDO_EOF] = 1;
 
     return freqTable;
@@ -40,35 +40,39 @@ HuffmanNode* buildEncodingTree(const map<int, int> &freqTable) {
 
     priority_queue<HuffmanNode*, vector<HuffmanNode*>, pless<HuffmanNode>> prioQueue;
 
+    //Populate priority queue
     for(map<int, int>::const_iterator it = begin(freqTable); it != end(freqTable); ++it){
 
-        cout << "Build node: " << it->first << " " << it->second << endl;
         prioQueue.push(new HuffmanNode(it->first, it->second));
     }
 
     //While there are at least one pair left
     while(prioQueue.size() > 1){
 
+        //Take first pair in queue
         HuffmanNode *zero = prioQueue.top();
         prioQueue.pop();
         HuffmanNode *one = prioQueue.top();
         prioQueue.pop();
 
-        cout << "Merging: " << zero->character << " " << one->character << endl;
+        //Merge pair and put their root back in the queue
         HuffmanNode* root = new HuffmanNode(NOT_A_CHAR, zero->count + one->count, zero, one);
         prioQueue.push(root);
     }
 
+    //Top is the root of the entire tree
     return prioQueue.top();
 }
 
 void buildEncodingMap(HuffmanNode* encodingTree, string encoding, map<int, string>& result) {
 
+    //Once we found a leaf we add the path as encoding for the character
     if(encodingTree->isLeaf()){
         result[encodingTree->character] = encoding;
         return;
     }
 
+    //Traverse tree, adding 0 or 1 to encoding path as we go
     buildEncodingMap(encodingTree->zero, encoding + '0', result);
     buildEncodingMap(encodingTree->one, encoding + '1', result);
 }
@@ -76,15 +80,15 @@ void buildEncodingMap(HuffmanNode* encodingTree, string encoding, map<int, strin
 map<int, string> buildEncodingMap(HuffmanNode* encodingTree) {
 
     map<int, string> encodingMap;
-
     buildEncodingMap(encodingTree, "", encodingMap);
 
     return encodingMap;
 }
 
+//TODO: Read one token at a time
 void encodeData(istream& input, const map<int, string> &encodingMap, obitstream& output) {
 
-    input.unsetf(ios_base::skipws);
+    input.unsetf(ios_base::skipws); //istream skips blankspace by default
     vector<int> inputVector {istream_iterator<char>(input), istream_iterator<char>()};
     inputVector.push_back(PSEUDO_EOF);
     encodeData(inputVector, encodingMap, output);
@@ -92,11 +96,9 @@ void encodeData(istream& input, const map<int, string> &encodingMap, obitstream&
 
 void encodeData(vector<int>& input, const map<int, string> &encodingMap, obitstream& output) {
 
-    cout << "Encoding " << input.size() << " tokens..." << endl;
     for(const int& token : input){
 
         char c = token;
-        cout << "Encoding: " << c << " : " << encodingMap.at(token) << endl;
         for(const char& bit : encodingMap.at(token)){
 
             cout << bit-48;
@@ -113,8 +115,6 @@ void decodeChar(ibitstream &input, HuffmanNode *encodingTree, ostream &output)
 
         char c = encodingTree->character;
         output << c;
-        //printf(output, "%c", encodingTree->character);
-        cout << endl << "Decoded: " << c << endl;
         return;
     }
 
@@ -135,8 +135,6 @@ int decodeChar(ibitstream& input, HuffmanNode* encodingTree){
 
     if(encodingTree->isLeaf()){
 
-        char c = encodingTree->character;
-        cout << "Decoded: " << c << endl;
         return encodingTree->character;
     }
 
@@ -162,17 +160,10 @@ void decodeData(ibitstream& input, HuffmanNode* encodingTree, ostream& output) {
 
         output << static_cast<char>(i);
     }
-
-    /*
-    while(input.peek() != -1){
-
-        decodeChar(input, encodingTree, output);
-    }*/
 }
 
 void compress(istream& input, obitstream& output) {
 
-    //vector<int> inputVector {istream_iterator<char>(input), istream_iterator<char>()};
     map<int, int> frequencyTable = buildFrequencyTable(input);
     saveFreqTable(frequencyTable);
 
