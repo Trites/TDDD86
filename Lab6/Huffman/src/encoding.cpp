@@ -88,56 +88,36 @@ map<int, string> buildEncodingMap(HuffmanNode* encodingTree) {
 //TODO: Read one token at a time
 void encodeData(istream& input, const map<int, string> &encodingMap, obitstream& output) {
 
-    input.unsetf(ios_base::skipws); //istream skips blankspace by default
-    vector<int> inputVector {istream_iterator<char>(input), istream_iterator<char>()};
-    inputVector.push_back(PSEUDO_EOF);
-    encodeData(inputVector, encodingMap, output);
-}
+    //Get one char and encode it
+    char c;
+    while(input.get(c)){
 
-void encodeData(vector<int>& input, const map<int, string> &encodingMap, obitstream& output) {
-
-    for(const int& token : input){
-
-        char c = token;
-        for(const char& bit : encodingMap.at(token)){
-
-            cout << bit-48;
-            output.writeBit(bit - 48);
-        }
-        cout << endl;
-    }
-}
-
-void decodeChar(ibitstream &input, HuffmanNode *encodingTree, ostream &output)
-{
-
-    if(encodingTree->isLeaf()){
-
-        char c = encodingTree->character;
-        output << c;
-        return;
+        encodeChar(c, encodingMap, output);
     }
 
-    switch(input.readBit()){
+    //Put EOF
+    encodeChar(PSEUDO_EOF, encodingMap, output);
+}
 
-        case 0:
-            cout << 0;
-            decodeChar(input, encodingTree->zero, output);
-            break;
-        case 1:
-            cout << 1;
-            decodeChar(input, encodingTree->one, output);
-            break;
+void encodeChar(int c, const map<int, string> &encodingMap, obitstream& output) {
+
+
+    //Write the encoded char bit-by-bit to output
+    for(const char& bit : encodingMap.at(c)){
+
+        output.writeBit(bit - 48);
     }
 }
 
 int decodeChar(ibitstream& input, HuffmanNode* encodingTree){
 
+    //If node is leaf then we have decoded a char
     if(encodingTree->isLeaf()){
 
         return encodingTree->character;
     }
 
+    //Traverse tree depending on the next bit
     if(input.readBit() == 0){
 
         return decodeChar(input, encodingTree->zero);
@@ -149,46 +129,49 @@ int decodeChar(ibitstream& input, HuffmanNode* encodingTree){
 
 void decodeData(ibitstream& input, HuffmanNode* encodingTree, ostream& output) {
 
-    int i;
-
+    int c;
     while(true){
 
-        i = decodeChar(input, encodingTree);
+        c = decodeChar(input, encodingTree);
 
-        if(i == PSEUDO_EOF)
+        //Return when EOF is found
+        if(c == PSEUDO_EOF)
             return;
 
-        output << static_cast<char>(i);
+        //Write decoded char to outstream
+        output << static_cast<char>(c);
     }
 }
 
 void compress(istream& input, obitstream& output) {
 
+    //Build and save frequencyTable
     map<int, int> frequencyTable = buildFrequencyTable(input);
     saveFreqTable(frequencyTable);
 
-    cout << frequencyTable.size() << endl;
+    //Build tree and map
     HuffmanNode *encodingTree = buildEncodingTree(frequencyTable);
     map<int, string> encodingMap = buildEncodingMap(encodingTree);
 
+    //Reset stream to beginning for second pass
     input.clear();
     input.seekg(0);
+
+    //Encode data in stream and free tree
     encodeData(input, encodingMap, output);
     freeTree(encodingTree);
 }
 
 void decompress(ibitstream& input, ostream& output) {
 
+    //Load frequencyTable from file
     map<int, int> freqTable = loadFreqTable();
 
-
-    for (map<int,int>::const_iterator it=begin(freqTable); it!=end(freqTable); ++it)
-        cout << "F-Table-A: " << it->first << " " << it->second << endl;
-
+    //Build tree and map
     HuffmanNode *encodingTree = buildEncodingTree(freqTable);
     map<int, string> encodingMap = buildEncodingMap(encodingTree);
 
-
+    //Decode data and free tree
     decodeData(input, encodingTree, output);
     freeTree(encodingTree);
 }
@@ -234,7 +217,6 @@ map<int, int> loadFreqTable()
         iss >> key;
         iss >> value;
 
-        cout << "F-table: " << key << " " << value << endl;
         freqTable[key] = value;
 
     }
