@@ -88,25 +88,28 @@ int main(int argc, char *argv[]) {
     int head = 1;
     for(const Point& origo : points){
 
-        map<double, priority_queue<Point, vector<Point>, DistanceCompare<origo.x, origo.y>>> lineMap;
+        map<double, priority_queue<Point>> lineMap;
         for(unsigned int i = head; i < points.size(); ++i){
 
             lineMap[origo.slopeTo(points[i])].push(points[i]);
         }
 
-        for (const std::pair<double, priority_queue<Point, vector<Point>, DistanceCompare<origo.x, origo.y>>> &entry: lineMap){
+        for (const std::pair<double, priority_queue<Point>> &entry: lineMap){
 
             if(entry.second.size() > 2){
 
+
                 origo.lineTo(scene, entry.second.top());
-            //    priority_queue<Point> line = entry.second;
+                priority_queue<Point> line = entry.second;
+                line.push(origo);
 
-              //  origo.lineTo(scene, line.top());
+                while(line.size() > 1){
 
-                /*while(line.size() > 0){
+                    Point p = line.top();
+                    line.pop();
+                    p.lineTo(scene, line.top());
+                }
 
-
-                }*/
             }
         }
 
