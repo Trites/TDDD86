@@ -36,7 +36,7 @@ template<int origoX, int origoY>
 class DistanceCompare
 {
 public:
-    bool operator() (const Point &a, const Point &b)
+    bool operator() (Point a, Point b)
     {
 
 
@@ -88,24 +88,25 @@ int main(int argc, char *argv[]) {
     int head = 1;
     for(const Point& origo : points){
 
-        map<double, priority_queue<Point>> lineMap;
+        map<double, priority_queue<Point, vector<Point>, DistanceCompare<origo.x, origo.y>>> lineMap;
         for(unsigned int i = head; i < points.size(); ++i){
 
             lineMap[origo.slopeTo(points[i])].push(points[i]);
         }
 
-        for (const std::pair<double, priority_queue<Point>> &entry: lineMap){
+        for (const std::pair<double, priority_queue<Point, vector<Point>, DistanceCompare<origo.x, origo.y>>> &entry: lineMap){
 
             if(entry.second.size() > 2){
 
-                priority_queue<Point> line = entry.second;
+                origo.lineTo(scene, entry.second.top());
+            //    priority_queue<Point> line = entry.second;
 
-                origo.lineTo(scene, line.top());
+              //  origo.lineTo(scene, line.top());
 
-                while(line.size() > 0){
+                /*while(line.size() > 0){
 
 
-                }
+                }*/
             }
         }
 

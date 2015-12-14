@@ -30,6 +30,7 @@ map<int, int> buildFrequencyTable(istream& input) {
     return freqTable;
 }
 
+//Allows storing pointers in priority_queue while still using HuffmanNode comparator
 template<typename Type, typename Compare = std::less<Type> >
 struct pless : public std::binary_function<Type *, Type *, bool> {
     bool operator()(const Type *x, const Type *y) const
@@ -133,7 +134,6 @@ void decodeData(ibitstream& input, HuffmanNode* encodingTree, ostream& output) {
     while(true){
 
         c = decodeChar(input, encodingTree);
-        //cout << "Decoded: " << static_cast<char>(c) << endl;
 
         //Return when EOF is found
         if(c == PSEUDO_EOF)
@@ -193,7 +193,6 @@ void saveFreqTable(const map<int, int> &freqTable, ostream& output)
 {
     for (auto it=begin(freqTable); it!=end(freqTable); ++it){
 
-        cout << "Save: " << it->first << ":" << it->second << endl;
         output << it->first << ' ' << it->second << ' ';
     }
 
