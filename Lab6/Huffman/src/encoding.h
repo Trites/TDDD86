@@ -13,6 +13,7 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include <vector>
 #include "bitstream.h"
 #include "HuffmanNode.h"
 using namespace std;
@@ -23,11 +24,17 @@ using namespace std;
  */
 map<int, int> buildFrequencyTable(istream& input);
 HuffmanNode* buildEncodingTree(const map<int, int>& freqTable);
+void buildEncodingMap(HuffmanNode* encodingTree, string encoding, map<int, string>& result);
 map<int, string> buildEncodingMap(HuffmanNode* encodingTree);
 void encodeData(istream& input, const map<int, string>& encodingMap, obitstream& output);
+void encodeData(vector<int>& input, const map<int, string>& encodingMap, obitstream& output);
+void decodeChar(ibitstream& input, HuffmanNode* encodingTree, ostream& output);
+int decodeChar(ibitstream& input, HuffmanNode* encodingTree);
 void decodeData(ibitstream& input, HuffmanNode* encodingTree, ostream& output);
 void compress(istream& input, obitstream& output);
 void decompress(ibitstream& input, ostream& output);
 void freeTree(HuffmanNode* node);
+void saveFreqTable(const map<int, int>& freqTable);
+map<int, int> loadFreqTable();
 
 #endif
