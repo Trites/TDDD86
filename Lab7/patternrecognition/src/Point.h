@@ -50,7 +50,7 @@ public:
 
     friend ostream& operator<<(ostream&, const Point&);
 
-
+private:
     unsigned int x, y; // position
 };
 

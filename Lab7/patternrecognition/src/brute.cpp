@@ -84,12 +84,12 @@ int main(int argc, char *argv[]) {
 
     auto begin = chrono::high_resolution_clock::now();
 
-
     int head = 1;
     for(const Point& origo : points){
 
         map<double, priority_queue<Point>> lineMap;
         for(unsigned int i = head; i < points.size(); ++i){
+
 
             lineMap[origo.slopeTo(points[i])].push(points[i]);
         }
@@ -99,9 +99,9 @@ int main(int argc, char *argv[]) {
             if(entry.second.size() > 2){
 
 
-                origo.lineTo(scene, entry.second.top());
                 priority_queue<Point> line = entry.second;
                 line.push(origo);
+
 
                 while(line.size() > 1){
 
@@ -109,7 +109,6 @@ int main(int argc, char *argv[]) {
                     line.pop();
                     p.lineTo(scene, line.top());
                 }
-
             }
         }
 
