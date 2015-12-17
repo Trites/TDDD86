@@ -17,7 +17,6 @@
 
 vector<Node*> depthFirstSearch(BasicGraph& graph, Node* start, Node* end);
 bool depthFirstExplore(BasicGraph& graph, Node* current, Node* end, vector<Node*>& pathTrace);
-vector<Node*> depthFirstSearchAlternative(BasicGraph& graph, Node* start, Node* end);
 vector<Node*> breadthFirstSearch(BasicGraph& graph, Node* start, Node* end);
 vector<Node*> dijkstrasAlgorithm(BasicGraph& graph, Node* start, Node* end);
 vector<Node*> aStar(BasicGraph& graph, Node* start, Node* end);
