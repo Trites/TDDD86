@@ -162,6 +162,39 @@ void Tour::insertSmallest(Point p)
     }
 }
 
+void Tour::twoOpt()
+{
+
+    Node* currentOuter = first;
+    Node* currentInner = nullptr;
+
+    while(currentOuter->next != first){
+         currentOuter = currentOuter->next;
+         currentInner = currentOuter;
+
+         cout << currentOuter->toString() << endl;
+         while(currentOuter->next != first){
+             currentInner = currentInner->next;
+
+             //if(linesIntersect(currentInner->point, currentInner->next->point, currentOuter->point, currentOuter->next->point)){
+
+             cout << currentOuter << ":" << currentInner << endl;
+                 swapNext(currentInner, currentOuter);
+             //}
+         }
+    }
+}
+
+/*
+ * Swaps next node values for two nodes
+ */
+void Tour::swapNext(Node* a, Node* b)
+{
+    Node* aNext = a->next;
+    a->next = b->next;
+    b->next = aNext;
+}
+
 /*
  * Creates a new node containing the given point and inserts it after the node.
  */
@@ -171,3 +204,39 @@ void Tour::insertAfter(const Point& point, Node* node){
     node->next = new Node(point);
     node->next->next = temp;
 }
+
+inline double Dot(const Point& a,const Point& b)                        { return (a.x*b.x) + (a.y*b.y); }
+inline double PerpDot(const Point& a,const Point& b)                    { return (a.y*b.x) - (a.x*b.y); }
+
+bool Tour::linesIntersect(const Point& beginA, const Point& endA, const Point& beginB, const Point& endB) const
+{
+    Point a{endA.x - beginA.x, endA.y - beginA.y};
+    Point b{endB.x - beginB.x, endB.y - beginB.y};
+
+    double f = PerpDot(a, b);
+    if(f == 0)
+        return false;
+
+    Point c(endB.x-endA.x, endB.y-endA.y);
+    double aa = PerpDot(a,c);
+    double bb = PerpDot(b,c);
+
+    if(f < 0)
+    {
+        if(aa > 0)     return false;
+        if(bb > 0)     return false;
+        if(aa < f)     return false;
+        if(bb < f)     return false;
+    }
+    else
+    {
+        if(aa < 0)     return false;
+        if(bb < 0)     return false;
+        if(aa > f)     return false;
+        if(bb > f)     return false;
+    }
+
+    return true;
+}
+
+
