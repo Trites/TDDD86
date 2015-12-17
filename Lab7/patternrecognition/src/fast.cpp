@@ -32,21 +32,6 @@ void render_line(QGraphicsScene* scene, const Point& p1, const Point& p2) {
     p1.lineTo(scene, p2);
 }
 
-template<int origoX, int origoY>
-class DistanceCompare
-{
-public:
-    bool operator() (Point a, Point b)
-    {
-
-
-        float distA = a.x - origoX + a.y - origoY;
-        float distB = b.x - origoX + b.y - origoY;
-
-        return distA*distA < distB*distB;
-    }
-};
-
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
 
@@ -84,30 +69,44 @@ int main(int argc, char *argv[]) {
 
     auto begin = chrono::high_resolution_clock::now();
 
-    int head = 1;
+    map<double, set<Point>> drawnSlopes; //Allows us to avoid drawing sub-lines, reduces draw calls from 369 (103 lines) to 277 (62 lines)
+
+    int head = 1; //Used to decrease the search space
+
+    //Let all points be origo
     for(const Point& origo : points){
 
+        //Keep a map where points will be inserted by their slope to current origin
+        //They will also be sorted based on Point::operator<
         map<double, priority_queue<Point>> lineMap;
-        for(unsigned int i = head; i < points.size(); ++i){
 
+        //We can start the search at head, since head-1 has already acted as origin an will not be a part of any new lines
+        for(unsigned int i = head; i < points.size(); ++i){
 
             lineMap[origo.slopeTo(points[i])].push(points[i]);
         }
 
+        //For every entry in the lineMap
         for (const std::pair<double, priority_queue<Point>> &entry: lineMap){
 
-            if(entry.second.size() > 2){
+            //If the size of the line is larger than 2 excluding the origin, it is a valid slope.
+            //We also demand that the point has not been part of a line with the same slope before.
+            if(entry.second.size() > 2){// && drawnSlopes[entry.first].count(entry.second.top()) == 0){
 
 
+                //Add origin to line
                 priority_queue<Point> line = entry.second;
                 line.push(origo);
 
-
+                //Draw line in order of Point::operator<
                 while(line.size() > 1){
 
                     Point p = line.top();
                     line.pop();
                     p.lineTo(scene, line.top());
+
+                    //Record that each point has been a part of this slope
+                    drawnSlopes[entry.first].insert(p);
                 }
             }
         }
@@ -119,7 +118,6 @@ int main(int argc, char *argv[]) {
     cout << "Computing line segments took "
          << std::chrono::duration_cast<chrono::milliseconds>(end - begin).count()
          << " milliseconds." << endl;
-
     return a.exec(); // start Qt event loop
 }
 
