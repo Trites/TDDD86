@@ -40,9 +40,6 @@ int main(int argc, char *argv[]) {
     ifstream input;
     input.open(filename);
 
-    // the vector of points
-    vector<Point> points;
-
     // read points from file
     int N;
     int x;
@@ -50,11 +47,17 @@ int main(int argc, char *argv[]) {
 
     input >> N;
 
+    //Put points in set for sorting
+    set<Point> orderedPoints;
     for (int i = 0; i < N; ++i) {
         input >> x >> y;
-        points.push_back(Point(x, y));
+        orderedPoints.insert(Point(x, y));
     }
     input.close();
+
+    //Transfer sorted points to vector
+    vector<Point> points {std::begin(orderedPoints), std::end(orderedPoints)};
+
 
     // setup graphical window
     QGraphicsView *view = new QGraphicsView();
@@ -67,46 +70,49 @@ int main(int argc, char *argv[]) {
     view->setWindowTitle("Brute Force Pattern Recognition");
     view->show();
 
+
     auto begin = chrono::high_resolution_clock::now();
+
 
     map<double, set<Point>> drawnSlopes; //Allows us to avoid drawing sub-lines, reduces draw calls from 369 (103 lines) to 277 (62 lines)
 
-    int head = 1; //Used to decrease the search space
+
+    int head = 1; //Used to limit search space
 
     //Let all points be origo
-    for(const Point& origo : points){
+    //NOTE: points vector is sorted in this implementation.
+    for(const Point& origo : points){ //n
 
         //Keep a map where points will be inserted by their slope to current origin
         //They will also be sorted based on Point::operator<
-        map<double, priority_queue<Point>> lineMap;
+        map<double, set<Point>> lineMap;
 
         //We can start the search at head, since head-1 has already acted as origin an will not be a part of any new lines
-        for(unsigned int i = head; i < points.size(); ++i){
+        for(unsigned int i = head; i < points.size(); ++i){ // n (Dependent on 'head': n, n-1, n-2, ... , n-n)
 
-            lineMap[origo.slopeTo(points[i])].push(points[i]);
+            lineMap[origo.slopeTo(points[i])].insert(points[i]); // Log(n)
         }
 
         //For every entry in the lineMap
-        for (const std::pair<double, priority_queue<Point>> &entry: lineMap){
+        for (const std::pair<double, set<Point>> &entry: lineMap){ //n (If no points share slope to origo)
 
             //If the size of the line is larger than 2 excluding the origin, it is a valid slope.
-            //We also demand that the point has not been part of a line with the same slope before.
-            if(entry.second.size() > 2){// && drawnSlopes[entry.first].count(entry.second.top()) == 0){
-
+            if(entry.second.size() > 2){
 
                 //Add origin to line
-                priority_queue<Point> line = entry.second;
-                line.push(origo);
+                set<Point> line = entry.second;
+                line.insert(origo);
+                Point lineEnd = *line.rbegin();
 
-                //Draw line in order of Point::operator<
-                while(line.size() > 1){
-
-                    Point p = line.top();
-                    line.pop();
-                    p.lineTo(scene, line.top());
+                //If the point has already been drawn with the same slope value we can discard the line as a duplicate
+                if(drawnSlopes[entry.first].count(lineEnd) == 0){
 
                     //Record that each point has been a part of this slope
-                    drawnSlopes[entry.first].insert(p);
+                    drawnSlopes[entry.first].insert(lineEnd);
+
+
+                    Point lineStart = *line.begin();
+                    lineStart.lineTo(scene, lineEnd);
                 }
             }
         }
